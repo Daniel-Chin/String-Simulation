@@ -18,7 +18,8 @@ def simString(
     sr = SR, n_string_markers = 90, 
     spring_stiff = 921, string_density = .001, 
     string_stretch = 0.18, 
-    wood_mass = .5, wood_damp = 5, 
+    wood_mass = 4, wood_damp = 0, 
+    unbendability = 1, 
     do_render = True, 
 ):
     time_step = 1 / sr
@@ -61,7 +62,9 @@ def simString(
             # wood_velocity += (- wood_damp * wood_velocity) * (time_step / wood_mass)
             wood_velocity *= np.exp(- wood_damp * time_step)
             wood_y += wood_velocity * time_step
-            forces = (adj_displace[1:] - adj_displace[:-1]) * (spring_stiff / marker_step)
+            forces = (adj_displace[1:] - adj_displace[:-1]) * (
+                spring_stiff / marker_step
+            ) + (unit_displace[1:] - unit_displace[:-1]) * unbendability
             markers_velocity += forces * (time_step / marker_mass)
             markers[1:-1] += markers_velocity * time_step
             # audio[clock] = wood_force
@@ -96,29 +99,31 @@ def render(markers, n_markers, t, y_ceil, force = False):
 def sampleAudio(wood_force):
     return wood_force
 
-def contrast(spec, x = 404):
+def contrast(audio, x = 404, ax = plt):
+    hann = scipy.signal.get_window('hann', audio.size, True)
+    spec = np.abs(np.fft.rfft(hann * audio))
     try:
-        plt.plot(np.log(np.abs(spec)))
+        log_spec = np.log(spec)
     except FloatingPointError:
         np.seterr(all='warn')
-        plt.plot(np.log(np.abs(spec)))
+        log_spec = np.log(spec)
         np.seterr(all='raise')
+    ax.plot(log_spec)
     for i in range(45):
         plt.axvline(x * i, c='r')
-    plt.axis([-100, 19000, -22, -9])
-    plt.show()
+    ax.axis([-100, 19000, -22, -9])
 
-audio = simString(do_render=0)
-print('sim ok...')
-previewAudio(audio, SR)
-plt.clf()
-plt.plot(audio)
-plt.show()
-hann = scipy.signal.get_window('hann', audio.size, True)
-spec = np.fft.rfft(hann * audio)
-contrast(spec)
-from console import console
-console(globals())
+def studyUnbendability():
+    trials = [0, 1, 5, 50, 200]
+    fig, axes = plt.subplots(len(trials))
+    for unbendability, ax in zip(trials, axes):
+        print('unbendability:', unbendability)
+        audio = simString(do_render=0, unbendability=unbendability)
+        contrast(audio, ax=ax)
+    fig.show()
+
+studyUnbendability()
+
 '''
 4 kg:
 47 cm -> 49 cm
