@@ -56,15 +56,23 @@ def simString(
             adj_displace = np.multiply(unit_displace, np.maximum(
                 0, norm_displace - rest_length, 
             )[:, np.newaxis])
-            wood_velocity += spring_stiff / marker_step * np.array([
-                adj_displace[0, 1], - adj_displace[-1, 1]
-            ]) * (time_step / wood_mass)
+            t0 = [
+                adj_displace[0, 1], - adj_displace[-1, 1], 
+            ]
+            t1 = [unit_displace[0, 1], - unit_displace[-1, 1]]
+            for i in (0, 1):
+                wood_velocity[i] += (
+                    spring_stiff / marker_step * t0[i] 
+                    + t1[i] * unbendability
+                ) * (time_step / wood_mass)
             # wood_velocity += (- wood_damp * wood_velocity) * (time_step / wood_mass)
             wood_velocity *= np.exp(- wood_damp * time_step)
             wood_y += wood_velocity * time_step
             forces = (adj_displace[1:] - adj_displace[:-1]) * (
                 spring_stiff / marker_step
-            ) + (unit_displace[1:] - unit_displace[:-1]) * unbendability
+            ) + unbendability * (
+                unit_displace[1:] - unit_displace[:-1]
+            )
             markers_velocity += forces * (time_step / marker_mass)
             markers[1:-1] += markers_velocity * time_step
             # audio[clock] = wood_force
@@ -110,17 +118,22 @@ def contrast(audio, x = 404, ax = plt):
         np.seterr(all='raise')
     ax.plot(log_spec)
     for i in range(45):
-        plt.axvline(x * i, c='r')
+        ax.axvline(x * i, c='r')
     ax.axis([-100, 19000, -22, -9])
 
 def studyUnbendability():
-    trials = [0, 1, 5, 50, 200]
+    # trials = [0, 20, 40, 60]
+    trials = [0, 100, 200, 400]
+    xs = [400 + x * .96 for x in trials]
+    xs[3] = 400 + 400 * .85
     fig, axes = plt.subplots(len(trials))
-    for unbendability, ax in zip(trials, axes):
+    for unbendability, ax, x in zip(trials, axes, xs):
         print('unbendability:', unbendability)
         audio = simString(do_render=0, unbendability=unbendability)
-        contrast(audio, ax=ax)
-    fig.show()
+        contrast(audio, x, ax=ax)
+        ax.title.set_text(f'unbendability = {unbendability}')
+    fig.tight_layout()
+    plt.show()
 
 studyUnbendability()
 
