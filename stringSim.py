@@ -29,7 +29,7 @@ def simString(
     for clock in range(clock_max):
         t = clock * time_step
         markers[0,  0] = 0
-        markers[-1, 0] = 0
+        markers[-1, 0] = 1
         markers[0,  1] = wood_y
         markers[-1, 1] = wood_y
         displace = markers[1:] - markers[:-1]
@@ -56,8 +56,8 @@ def render(markers, n_markers, t, force = False):
             return
     plt.clf()
     plt.plot(markers[:, 0], markers[:, 1], '.')
-    plt.axis('equal')
-    plt.axis([0, 1, -.3, .3])
+    # plt.axis('equal')
+    plt.axis([-.05, 1.05, -.2, .2])
     plt.title(f't = {t}')
     plt.draw()
     plt.pause(.15)
