@@ -1,21 +1,20 @@
 '''
-spring rest length
 '''
 from matplotlib import pyplot as plt
 import numpy as np
 from previewAudio import previewAudio
 
-SR = 40000
+SR = 100000
 
 np.seterr(all='raise')
 
 def simString(
     t_max = 2, pluck_height = .003, 
-    pluck_pos = .5, 
-    # pluck_pos = 1 / np.pi, 
+    # pluck_pos = .5, 
+    pluck_pos = 1 / np.pi, 
     sr = SR, n_string_markers = 50, 
     spring_stiff = 921, string_density = .001, 
-    string_stretch = 0.04, 
+    string_stretch = 0.18, 
     wood_mass = 4, wood_damp = 0, 
     do_render = True, 
 ):
@@ -60,13 +59,14 @@ def simString(
         markers_velocity += forces * (time_step / marker_mass)
         markers[1:-1] += markers_velocity * time_step
         audio[clock] = sampleAudio(wood_force)
+        # audio[clock] = sampleAudio(wood_y)
         if do_render:
             render(markers, n_markers, t, pluck_height * 2)
     return audio
 
 # time steps prt frame
-TSPF = 1
-# TSPF = 300
+# TSPF = 1
+TSPF = 100
 tspf_progress = 0
 def render(markers, n_markers, t, y_ceil, force = False):
     global tspf_progress
@@ -81,18 +81,18 @@ def render(markers, n_markers, t, y_ceil, force = False):
     plt.plot(markers[:, 0], markers[:, 1], 'o')
     # plt.axis('equal')
     plt.axis([-.05, 1.05, -y_ceil, y_ceil])
-    plt.title(f't = {t}')
+    plt.title(f't = {format(t, ".03f")}')
     plt.draw()
     plt.pause(.15)
 
 def sampleAudio(wood_force):
     return wood_force
 
-audio = simString(do_render=1)
+audio = simString(do_render=0)
 print('sim ok...')
 previewAudio(audio, SR)
-# plt.plot(audio)
-# plt.show()
+plt.plot(audio)
+plt.show()
 
 '''
 4 kg:
