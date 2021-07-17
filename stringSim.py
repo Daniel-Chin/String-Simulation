@@ -6,7 +6,7 @@ def simString(
     # sr = 44100, n_string_markers = 256, 
     sr = 44100, n_string_markers = 16, 
     spring_stiff = 1, string_density = 1, 
-    wood_mass = 100,
+    wood_mass = 100, wood_damp = .1, 
 ):
     time_step = 1 / sr
     marker_mass = string_density / n_string_markers
@@ -35,6 +35,7 @@ def simString(
         displace = markers[1:] - markers[:-1]
         wood_force = (displace[0, 1] - displace[-1, 1]) * spring_stiff
         wood_velocity += wood_force * (time_step / wood_mass)
+        wood_velocity += (- wood_damp * wood_velocity) * (time_step / wood_mass)
         wood_y += wood_velocity * time_step
         forces = (displace[1:] - displace[:-1]) * spring_stiff
         markers_velocity += forces * (time_step / marker_mass)
@@ -43,7 +44,7 @@ def simString(
         render(markers, n_markers, t)
     return audio
 
-TSPF = 10   # time steps prt frame
+TSPF = 30   # time steps prt frame
 tspf_progress = 0
 def render(markers, n_markers, t, force = False):
     global tspf_progress
